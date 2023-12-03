@@ -39,15 +39,11 @@ class Game {
 
     getMaxOfEachColor() {
         return this.sets.reduce((colors, cubes) => {
-            if (colors.red < cubes.set.find((set) => set.kind === 'red')?.count) {
-                colors.red = cubes.set.find((set) => set.kind === 'red').count;
-            }
-            if (colors.green < cubes.set.find((set) => set.kind === 'green')?.count) {
-                colors.green = cubes.set.find((set) => set.kind === 'green').count;
-            }
-            if (colors.blue < cubes.set.find((set) => set.kind === 'blue')?.count) {
-                colors.blue = cubes.set.find((set) => set.kind === 'blue')?.count;
-            }
+            Object.keys(RULES).forEach((color) => {
+                if (colors[color] < cubes.set.find((set) => set.kind === color)?.count) {
+                    colors[color] = cubes.set.find((set) => set.kind === color).count;
+                }
+            });
 
             return colors;
         }, {red: 0, green: 0, blue: 0})
