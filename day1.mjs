@@ -1,10 +1,10 @@
-import { readFileSync } from "fs";
+import getInputs from "./utils/utils.mjs";
 
 async function day1PartOne() {
-    const inputLines = readFileSync("./inputs/day1.txt").toString().split("\n");
+    const inputLines = getInputs("./inputs/day1.txt");
 
     const result = inputLines.reduce((calibration, line) => {
-        const lineNumbers = line.match(/\D/g);
+        const lineNumbers = line.match(/\d/g);
         const firstNumber = lineNumbers[0];
         const lastNumber = lineNumbers[lineNumbers.length - 1];
 
@@ -15,7 +15,7 @@ async function day1PartOne() {
 };
 
 async function day1PartTwo() {
-    const inputLines = readFileSync("./inputs/day1.txt").toString().split("\n");
+    const inputLines = getInputs("./inputs/day1.txt");
 
     const toInt = { "one": "1", "two": "2", "three": "3", "four": "4", "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9" };
     const result = inputLines.reduce((calibration, line) => {
@@ -32,4 +32,5 @@ async function day1PartTwo() {
     console.log(result);
 };
 
+day1PartOne();
 day1PartTwo();
