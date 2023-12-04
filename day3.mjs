@@ -15,12 +15,27 @@ class Symbol {
         this.neighbors = neighbors;
         this.linkedTo = linkedTo;
     }
+
+    setSymbolNeighbors(symbolPosition, line, lineBefore, lineAfter) {
+        const neighbors = [];
+    
+        const colStart = symbolPosition -1 < 0 ? symbolPosition : symbolPosition - 1;
+        const colEnd = symbolPosition === line.symbols.length - 1 ? symbolPosition : symbolPosition + 1;
+    
+        for (let j = colStart; j <= colEnd; j++) {
+            lineBefore && neighbors.push(lineBefore.symbols[j]);
+            neighbors.push(line.symbols[j]);
+            lineAfter && neighbors.push(lineAfter.symbols[j]);
+        }
+    
+        this.neighbors = neighbors;
+    }
 }
 
 class Line {
     symbols;
 
-    constructor(line, lineBefore, lineAfter) {
+    constructor(line) {
         this.symbols = [];
 
         const lineSplit = line.split("");
@@ -33,12 +48,10 @@ class Line {
 
             symbols.push(symbol);
             linkedTo.push(symbol);
-            neighbors.push(...this.getNeighbors(i, line, lineBefore, lineAfter));
 
             while(i + 1 !== lineSplit.length && lineSplit[i + 1].match(/\d/g) && symbol.match(/\d/g)) {
                 i += 1;
                 symbol = lineSplit[i];
-                neighbors.push(...this.getNeighbors(i, line, lineBefore, lineAfter));
                 symbols.push(symbol);
                 linkedTo.push(symbol);
             }
@@ -47,28 +60,19 @@ class Line {
             this.symbols.push(...symbols.map((s) => new Symbol(groupId, s, neighbors, linkedTo)));
         }
     }
-
-    getNeighbors(symbolPosition, line, lineBefore, lineAfter) {
-        const neighbors = [];
-
-        const colStart = symbolPosition -1 < 0 ? symbolPosition : symbolPosition - 1;
-        const colEnd = symbolPosition === line.length - 1 ? symbolPosition : symbolPosition + 1;
-
-        for (let j = colStart; j <= colEnd; j++) {
-            lineBefore && neighbors.push(lineBefore[j]);
-            neighbors.push(line[j]);
-            lineAfter && neighbors.push(lineAfter[j]);
-        }
-
-        return neighbors;
-    }
 }
 
 function day3PartOne() {
     const inputLines = getInputs("./inputs/day3.txt");
-    const lines = inputLines.map((line, index) => new Line(line, inputLines[index - 1]?.split(""), inputLines[index + 1]?.split("")));
+    const lines = inputLines.map((line) => new Line(line));
 
-    const symbols = lines.flatMap((line) => line.symbols).filter((symbol) => symbol.isNumber && symbol.neighbors.some((neighbor) => neighbor !== "." && !(/\d/g.test(neighbor))));
+    lines.forEach((line, indexLine) => {
+        line.symbols.forEach((symbol, index) => {
+            symbol.setSymbolNeighbors(index, line, lines[indexLine - 1], lines[indexLine + 1]);
+        })
+    });
+
+    const symbols = lines.flatMap((line) => line.symbols).filter((symbol) => symbol.isNumber && symbol.neighbors.some((neighbor) => neighbor.value !== "." && !(/\d/g.test(neighbor.value))));
     const symbolsWithoutDuplicate = [...new Map(symbols.map((s) => [s.groupId, s])).values()];
     const result = symbolsWithoutDuplicate.reduce((total, symbol) => total + parseInt(symbol.linkedTo.join('')), 0);
     console.log(result)
@@ -76,13 +80,31 @@ function day3PartOne() {
 
 function day3PartTwo() {
     const inputLines = getInputs("./inputs/day3.txt");
-    const lines = inputLines.map((line, index) => new Line(line, inputLines[index - 1]?.split(""), inputLines[index + 1]?.split("")));
+    const lines = inputLines.map((line) => new Line(line));
 
-    const symbols = lines.flatMap((line) => line.symbols).filter((symbol) => symbol.value === "*" && symbol.neighbors.filter((neighbor) => neighbor.match(/\d/g))?.length === 2);
-    console.log(symbols)
-    // const symbolsWithoutDuplicate = [...new Map(symbols.map((s) => [s.groupId, s])).values()];
-    // const result = symbolsWithoutDuplicate.reduce((total, symbol) => total + parseInt(symbol.linkedTo.join('')), 0);
-    // console.log(result)
+    lines.forEach((line, indexLine) => {
+        line.symbols.forEach((symbol, index) => {
+            symbol.setSymbolNeighbors(index, line, lines[indexLine - 1], lines[indexLine + 1]);
+        })
+    });
+
+    const gearWithGoodNeighbors = lines
+        .flatMap((line) => line.symbols).filter((symbol) => symbol.value === "*")
+        .reduce((symbolWithDigitNeighbors, symbol) => {
+            const digitOnlyNeighbors = symbol.neighbors.filter((neighbor) => neighbor.value.toString().match(/\d/g));
+            const neighborsWithtDouble = [...new Map(digitOnlyNeighbors.map((s) => [s.groupId, s])).values()]
+            if (neighborsWithtDouble.length === 2) {
+                symbolWithDigitNeighbors.push({ ...symbol, neighbors: neighborsWithtDouble });
+            }
+
+            return symbolWithDigitNeighbors;
+        }, []);
+
+        console.log(gearWithGoodNeighbors
+            .map((symbol) => symbol.neighbors)
+            .reduce((totalByGear, neighbors) => totalByGear + parseInt(neighbors[0].linkedTo.join('')) * parseInt(neighbors[1].linkedTo.join('')), 0)
+        );
 };
 
 day3PartOne();
+day3PartTwo();
