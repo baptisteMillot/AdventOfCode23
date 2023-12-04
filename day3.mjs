@@ -1,14 +1,19 @@
 import getInputs from "./utils/utils.mjs";
+import crypto from 'crypto';
 
 class Symbol {
+    groupId;
     value;
     isNumber;
     neighbors;
+    linkedTo;
 
-    constructor(value, neighbors) {
+    constructor(groupId, value, neighbors, linkedTo) {
+        this.groupId = groupId;
         this.isNumber = /\d/g.test(value);
         this.value = this.isNumber ? parseInt(value) : value;
         this.neighbors = neighbors;
+        this.linkedTo = linkedTo;
     }
 }
 
@@ -21,17 +26,25 @@ class Line {
         const lineSplit = line.split("");
         for (let i = 0; i < lineSplit.length ; i++) {
             let symbol = lineSplit[i];
-            let number = "";
+
+            const symbols = [];
+            const linkedTo = [];
             const neighbors = [];
 
-            while(i !== lineSplit.length && symbol.match(/\d/g)) {
-                neighbors.push(...this.getNeighbors(i, line, lineBefore, lineAfter));
-                number += symbol;
+            symbols.push(symbol);
+            linkedTo.push(symbol);
+            neighbors.push(...this.getNeighbors(i, line, lineBefore, lineAfter));
+
+            while(i + 1 !== lineSplit.length && lineSplit[i + 1].match(/\d/g) && symbol.match(/\d/g)) {
                 i += 1;
                 symbol = lineSplit[i];
+                neighbors.push(...this.getNeighbors(i, line, lineBefore, lineAfter));
+                symbols.push(symbol);
+                linkedTo.push(symbol);
             }
             
-            this.symbols.push(new Symbol(number || symbol, neighbors));
+            const groupId = crypto.randomUUID();
+            this.symbols.push(...symbols.map((s) => new Symbol(groupId, s, neighbors, linkedTo)));
         }
     }
 
@@ -43,7 +56,7 @@ class Line {
 
         for (let j = colStart; j <= colEnd; j++) {
             lineBefore && neighbors.push(lineBefore[j]);
-            !(/\d/g.test(line[j])) && neighbors.push(line[j]);
+            neighbors.push(line[j]);
             lineAfter && neighbors.push(lineAfter[j]);
         }
 
@@ -55,9 +68,21 @@ function day3PartOne() {
     const inputLines = getInputs("./inputs/day3.txt");
     const lines = inputLines.map((line, index) => new Line(line, inputLines[index - 1]?.split(""), inputLines[index + 1]?.split("")));
 
-    const symbols = lines.flatMap((line) => line.symbols).filter((symbol) => symbol.neighbors.some((neighbor) => neighbor !== "."));
-    const result = symbols.reduce((total, symbol) => total + symbol.value, 0);
+    const symbols = lines.flatMap((line) => line.symbols).filter((symbol) => symbol.isNumber && symbol.neighbors.some((neighbor) => neighbor !== "." && !(/\d/g.test(neighbor))));
+    const symbolsWithoutDuplicate = [...new Map(symbols.map((s) => [s.groupId, s])).values()];
+    const result = symbolsWithoutDuplicate.reduce((total, symbol) => total + parseInt(symbol.linkedTo.join('')), 0);
     console.log(result)
+};
+
+function day3PartTwo() {
+    const inputLines = getInputs("./inputs/day3.txt");
+    const lines = inputLines.map((line, index) => new Line(line, inputLines[index - 1]?.split(""), inputLines[index + 1]?.split("")));
+
+    const symbols = lines.flatMap((line) => line.symbols).filter((symbol) => symbol.value === "*" && symbol.neighbors.filter((neighbor) => neighbor.match(/\d/g))?.length === 2);
+    console.log(symbols)
+    // const symbolsWithoutDuplicate = [...new Map(symbols.map((s) => [s.groupId, s])).values()];
+    // const result = symbolsWithoutDuplicate.reduce((total, symbol) => total + parseInt(symbol.linkedTo.join('')), 0);
+    // console.log(result)
 };
 
 day3PartOne();
