@@ -84,4 +84,30 @@ function day5PartOne() {
     console.log(result)
 };
 
-day5PartOne();
+function day5PartTwo() {
+    const [seedsLine, ...inputLines] = getInputs("./inputs/day5.txt");
+
+    const seedDetails = seedsLine
+        .split(" ")
+        .filter((seed) => /\d/g.test(seed))
+        .map((seed) => parseInt(seed));
+
+    const almanac = new Almanac(inputLines);
+
+    let result;
+
+    for (let i = 0; i < seedDetails.length; i = i + 2) {
+        const start = seedDetails[i];
+        const end = start + seedDetails[i + 1] -1;
+        for (let j = start; j <= end; j++) {
+            const location = almanac.getLocationOfSeed(j);
+            if (!result || location < result) {
+                result = location;
+            }
+        }
+    }
+
+    console.log(result)
+};
+
+day5PartTwo();
